@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+
+<div class="video-source-container">
+  <div class="video_source">
+    <label for="video-source">Select Video Source:</label>
+    <select id="video-source">
+      <option value="camera">Camera</option>
+      <option value="video">Video</option>
+    </select>
+  </div>
+</div>
+
+<div id="video-container"></div>
+<div id="videos">
+  <!-- <div id="local-video">
+    <video class="video-player" id="local_video" playsinline controls autoplay>
+      <source src="../../videos/video.mp4" type="video/mp4" />
+    </video>
+  </div> -->
+  <video class="video-player" id="user-1" autoplay playsinline>
+    <source src="../../videos/video.mp4" type="video/mp4"/>
+  </video>
+  <video class="video-player" id="user-2" autoplay playsinline></video>
+
+  <div id="controls">
+    <div class="control-container" id="camera-btn">
+      <i class="material-icons">video_camera_front</i>
+    </div>
+    <div class="control-container" id="mic-btn">
+      <i class="material-icons">mic</i>
+    </div>
+    <a ui-sref="home">
+      <div class="control-container" id="leave-btn">
+        <i class="material-icons">call_end</i>
+      </div>
+    </a>
+  </div>
+</div>

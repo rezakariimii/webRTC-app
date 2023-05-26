@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<div class="lobby-page">
+  <div class="lobby-links">
+    <a class="btn btn-primary" ui-sref="home">Home</a>
+    <a class="btn btn-danger" ui-sref="home">Logout</a>
+  </div>
+  <div id="join-lobby" class="lobby-dark">
+    <form method="post" id="lobby" ng-submit="submitLobby()">
+      <h2 class="sr-only">Room</h2>
+      <div class="illustration">
+        <i class="material-icons md-148">meeting_room</i>
+      </div>
+      <div class="form-group">
+        <input
+          ng-model="inviteLink"
+          class="form-control"
+          required
+          name="invite_link"
+          placeholder="Room id"
+        />
+      </div>
+      <div class="form-group">
+        <button class="btn btn-primary btn-block" type="submit">Join Room</button>
+      </div>
+    </form>
+  </div>
+</div>
