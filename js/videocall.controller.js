@@ -45,12 +45,20 @@
 
       client.on("MessageFromPeer", handleMessageFromPeer);
       try {
-        if (videoSource === "video") {
+        if (videoSource === "camera") {
+          source.disabled = true;
+          const constraints = {
+            video: true,
+            audio: false,
+          };
+          user1.removeAttribute("controls", "");
+          localStream = await navigator.mediaDevices.getUserMedia(constraints);
+          user1.srcObject = localStream;
+        } else if (videoSource === "video") {
           if (localStream) {
             localStream.getTracks().forEach((track) => track.stop());
           }
           user1.srcObject = null;
-
 
           source.disabled = false;
           user1.setAttribute("controls", "");
@@ -60,14 +68,6 @@
           localStream.getTracks().forEach((track) => {
             peerConnection.addTrack(track, localStream);
           });
-        } else if (videoSource === "camera") {
-          source.disabled = true;
-          const constraints = {
-            video: true,
-            audio: false,
-          };
-          localStream = await navigator.mediaDevices.getUserMedia(constraints);
-          user1.srcObject = localStream;
         }
       } catch (error) {
         console.log("Failed to get local stream:", error);
