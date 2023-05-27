@@ -21,7 +21,6 @@
     const user2 = document.getElementById("user-2");
     const videoSourceSelect = document.getElementById("video-source");
     const container = document.getElementById("video-container");
-    const source = user1.querySelector("source");
     const localVideo = document.getElementById("local-video");
     const url =
       "https://vod.api.video/vod/vi5cy5bjAOfKh1oajLM2sHS1/mp4/source.mp4";
@@ -46,7 +45,6 @@
       client.on("MessageFromPeer", handleMessageFromPeer);
       try {
         if (videoSource === "camera") {
-          source.disabled = true;
           const constraints = {
             video: true,
             audio: false,
@@ -60,7 +58,7 @@
           }
           user1.srcObject = null;
 
-          source.disabled = false;
+          user1.src = "../videos/chrome.webm";
           user1.setAttribute("controls", "");
           const stream = user1.captureStream();
           localStream = stream;
