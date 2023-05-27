@@ -46,7 +46,10 @@
       try {
         if (videoSource === "camera") {
           const constraints = {
-            video: true,
+            video: {
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+            },
             audio: false,
           };
           user1.removeAttribute("controls", "");
@@ -111,7 +114,10 @@
         if (!localStream) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({
-              video: true,
+              video: {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+              },
               audio: false,
             });
             user1.srcObject = localStream;
