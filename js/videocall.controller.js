@@ -114,6 +114,33 @@
       channel.on("MemberLeft", handleMemberLeft);
 
       client.on("MessageFromPeer", handleMessageFromPeer);
+      try {
+        if (videoSource === "camera") {
+          const constraints = {
+            video: true,
+            audio: false,
+          };
+          user1.removeAttribute("controls", "");
+          localStream = await navigator.mediaDevices.getUserMedia(constraints);
+          user1.srcObject = localStream;
+        } else if (videoSource === "video") {
+          if (localStream) {
+            localStream.getTracks().forEach((track) => track.stop());
+          }
+          user1.srcObject = null;
+
+          user1.src = "../videos/chrome.webm";
+          user1.setAttribute("controls", "");
+          const stream = user1.captureStream();
+          localStream = stream;
+          peerConnection = new RTCPeerConnection(configuration);
+          localStream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, localStream);
+          });
+        }
+      } catch (error) {
+        console.log("Failed to get local stream:", error);
+      }
 
       async function handleMemberJoined(memberId) {
         createOffer(memberId);
