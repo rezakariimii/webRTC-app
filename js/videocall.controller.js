@@ -9,6 +9,7 @@
     const configuration = {
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     };
+    $scope.selectedVideoSource = "camera";
 
     let uid = String(Math.floor(Math.random() * 10000));
     let client = null;
@@ -19,20 +20,90 @@
     let roomId = $location.search().room;
     const user1 = document.getElementById("user-1");
     const user2 = document.getElementById("user-2");
-    const videoSourceSelect = document.getElementById("video-source");
     const container = document.getElementById("video-container");
-    const localVideo = document.getElementById("local-video");
-    const url =
-      "https://vod.api.video/vod/vi5cy5bjAOfKh1oajLM2sHS1/mp4/source.mp4";
-
-    videoSourceSelect.addEventListener("change", init);
 
     if (!roomId) {
       $location.path("/lobby");
     }
 
-    async function init() {
-      const videoSource = videoSourceSelect.value;
+    $scope.select = async function () {
+      const videoSource = $scope.selectedVideoSource;
+      if (videoSource === "camera") {
+        await showCamera();
+      } else if (videoSource === "video") {
+        showFileInput();
+      }
+    };
+
+    async function showCamera() {
+      try {
+        const constraints = {
+          video: true,
+          audio: false,
+        };
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        user1.srcObject = localStream;
+        user1.removeAttribute("controls");
+        $scope.init();
+      } catch (error) {
+        console.error("Error getting user media:", error);
+      }
+    }
+
+    function showFileInput() {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "video/*";
+      fileInput.addEventListener("change", handleFileInputChange);
+      fileInput.click();
+    }
+
+    function handleFileInputChange() {
+      const file = this.files[0];
+      if (!file) {
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      stopLocalStreamTracks();
+      resetUser1();
+      setUser1Src(url);
+      setUser1Controls();
+      createPeerConnection();
+      addLocalStreamTracks();
+      $scope.init();
+    }
+
+    function stopLocalStreamTracks() {
+      if (!localStream) {
+        return;
+      }
+      localStream.getTracks().forEach((track) => track.stop());
+    }
+
+    function resetUser1() {
+      user1.srcObject = null;
+    }
+
+    function setUser1Src(url) {
+      user1.src = url;
+    }
+
+    function setUser1Controls() {
+      user1.setAttribute("controls", "");
+    }
+
+    function createPeerConnection() {
+      peerConnection = new RTCPeerConnection(configuration);
+    }
+
+    function addLocalStreamTracks() {
+      localStream = user1.captureStream();
+      localStream.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, localStream);
+      });
+    }
+
+    $scope.init = async function () {
       container.innerHTML = "";
       client = await AgoraRTM.createInstance(APP_ID);
       await client.login({ uid, token: null });
@@ -43,33 +114,6 @@
       channel.on("MemberLeft", handleMemberLeft);
 
       client.on("MessageFromPeer", handleMessageFromPeer);
-      try {
-        if (videoSource === "camera") {
-          const constraints = {
-            video: true,
-            audio: false,
-          };
-          user1.removeAttribute("controls", "");
-          localStream = await navigator.mediaDevices.getUserMedia(constraints);
-          user1.srcObject = localStream;
-        } else if (videoSource === "video") {
-          if (localStream) {
-            localStream.getTracks().forEach((track) => track.stop());
-          }
-          user1.srcObject = null;
-
-          user1.src = "../videos/chrome.webm";
-          user1.setAttribute("controls", "");
-          const stream = user1.captureStream();
-          localStream = stream;
-          peerConnection = new RTCPeerConnection(configuration);
-          localStream.getTracks().forEach((track) => {
-            peerConnection.addTrack(track, localStream);
-          });
-        }
-      } catch (error) {
-        console.log("Failed to get local stream:", error);
-      }
 
       async function handleMemberJoined(memberId) {
         createOffer(memberId);
@@ -78,26 +122,6 @@
       async function handleMemberLeft(memberId) {
         user2.style.display = "none";
         user1.classList.remove("smallFrame");
-      }
-
-      async function handleMessageFromPeer(message, memberId) {
-        message = JSON.parse(message.text);
-
-        switch (message.type) {
-          case "offer":
-            await createAnswer(memberId, message.offer);
-            break;
-          case "answer":
-            addAnswer(message.answer);
-            break;
-          case "candidate":
-            if (peerConnection) {
-              peerConnection.addIceCandidate(message.candidate);
-            }
-            break;
-          default:
-            console.log("Unknown message type:", message.type);
-        }
       }
 
       async function createPeerConnection(memberId) {
@@ -111,7 +135,10 @@
         if (!localStream) {
           try {
             localStream = await navigator.mediaDevices.getUserMedia({
-              video: true,
+              video: {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+              },
               audio: false,
             });
             user1.srcObject = localStream;
@@ -157,16 +184,32 @@
 
         try {
           await peerConnection.setLocalDescription(offer);
-
-          // const videoTrack = remoteStream.getTracks()[0];
-          // peerConnection.addTrack(videoTrack, remoteStream);
-
           client.sendMessageToPeer(
             { text: JSON.stringify({ type: "offer", offer }) },
             memberId
           );
         } catch (error) {
           console.log("Failed to create offer:", error);
+        }
+      }
+
+      async function handleMessageFromPeer(message, memberId) {
+        message = JSON.parse(message.text);
+
+        switch (message.type) {
+          case "offer":
+            await createAnswer(memberId, message.offer);
+            break;
+          case "answer":
+            addAnswer(message.answer);
+            break;
+          case "candidate":
+            if (peerConnection) {
+              peerConnection.addIceCandidate(message.candidate);
+            }
+            break;
+          default:
+            console.log("Unknown message type:", message.type);
         }
       }
 
@@ -192,7 +235,7 @@
           console.log("Failed to create answer:", error);
         }
       }
-    }
+    };
 
     function addAnswer(answer) {
       if (peerConnection && !peerConnection.currentRemoteDescription) {
@@ -243,6 +286,6 @@
 
     window.addEventListener("beforeunload", leaveChannel);
 
-    init();
+    $scope.init();
   }
 })();

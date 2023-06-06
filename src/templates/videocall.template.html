@@ -3,7 +3,7 @@
 <div class="video-source-container">
   <div class="video_source">
     <label for="video-source">Select Video Source:</label>
-    <select id="video-source">
+    <select id="video-source" ng-model="selectedVideoSource" ng-change="select()">
       <option value="camera">Camera</option>
       <option value="video">Video</option>
     </select>
